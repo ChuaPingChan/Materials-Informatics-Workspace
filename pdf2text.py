@@ -85,7 +85,7 @@ def main():
         try:
             extracted_text = convert_pdf2text('text', filepath)
         except Exception as err:
-            print('\t[Error] Failed to convert PDF to text. ' + str(err))
+            print('\t[Error] Failed to convert {} to text. '.format(filename) + str(err))
             continue
 
         # Write to file

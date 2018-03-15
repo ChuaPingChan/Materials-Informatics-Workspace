@@ -70,7 +70,8 @@ def preprocess_string(s):
     tokens = tokenize_string(s)
     MIN_TOKEN_CHAR_NUM = 3
     MAX_TOKEN_CHAR_NUM = 20
-    tokens = [token for token in tokens if ((len(token) >= MIN_TOKEN_CHAR_NUM1) and (len(token) <= MAX_TOKEN_CHAR_NUM))]
+    tokens = [token for token in tokens if ((len(token) >= MIN_TOKEN_CHAR_NUM)
+                                            and (len(token) <= MAX_TOKEN_CHAR_NUM))]
     stemmed_tokens = stem_tokens(tokens)
     s = ' '.join(stemmed_tokens)
 
@@ -82,7 +83,7 @@ def preprocess_string(s):
     
     return s
 
-def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 90,
+def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 80,
                                  min_wordfreq = 3):
     """
     Parses all text documents in corpus_dir and remove words with appearance
@@ -118,7 +119,7 @@ def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 90,
 
     # TODO: Debugging
     print('Removing words that appear less than {} times in corpus:'.format(min_wordfreq))
-    print(str([(term, wordfreq) for (term, wordfreq)
+    print(str([term for (term, wordfreq)
                in sorted(wordfreq_counter.items())
                if wordfreq < min_wordfreq]))
     print('Removing words that appear in more than {}({}%) documents:'.format(max_allowable_docfreq, max_allowable_percentage))
@@ -153,7 +154,7 @@ def process_text_for_hLDA():
         sys.exit(2)
 
     # Default directories
-    input_dir = os.path.join('extracted-text2', '')
+    input_dir = os.path.join('extracted-text', '')
     output_dir = os.path.join('processed-text', '')
 
     for o, a in opts:
@@ -208,4 +209,5 @@ def docs_2_single_file():
 
 if (__name__ == '__main__'):
     process_text_for_hLDA()
+    docs_2_single_file()
     print('Finished running TextManipulator.py! :)')
