@@ -19,7 +19,7 @@ def list_doc_by_idx(idx_list):
     for filename in os.listdir(input_dir_processed):
         if(currIdx in idx_set):
             count += 1
-            idx_2_filename_map[currIdx] = filename
+            idx_2_filename_map[currIdx] = os.path.splitext(filename)[0]
         
         currIdx += 1
         if (count == num_to_list):
@@ -27,7 +27,7 @@ def list_doc_by_idx(idx_list):
     
     # Print filenames
     for idx in idx_list:
-        print(idx_2_filename_map[idx])
+        print('    {} -'.format(idx), idx_2_filename_map[idx])
 
     return
 
@@ -46,3 +46,4 @@ if (__name__ == '__main__'):
         idx_list = [int(docIdx) for docIdx in args[1:]]
 
     list_doc_by_idx(idx_list)
+    

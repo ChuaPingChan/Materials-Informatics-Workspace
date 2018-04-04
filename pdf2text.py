@@ -2,7 +2,6 @@ import sys
 import re
 import os
 import getopt
-import PyPDF2
 import chardet
 
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
@@ -15,7 +14,7 @@ import io
 def convert_pdf2text(case,fname, pages=None):
     if not pages: pagenums = set();
     else:         pagenums = set(pages);      
-    manager = PDFResourceManager() 
+    manager = PDFResourceManager()
     codec = 'utf-8'
     caching = True
 

@@ -4,6 +4,7 @@ import sys
 import getopt
 from collections import Counter
 from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 import unidecode
@@ -17,10 +18,29 @@ def remove_punctuations(string):
 def tokenize_string(string):
     return word_tokenize(string)
 
+# TODO: Remove. Debugging
+lemmatized_dict = dict()
+def lemmatize_tokens(list_of_tokens):
+    """
+    Pre-conditions:
+    - list_of_tokens must be a list of strings to lemmatize
+    """
+    assert(type(list_of_tokens) == list)
+    
+    lmtzr = WordNetLemmatizer()
+    lemmatized_tokens = [lmtzr.lemmatize(token) for token in list_of_tokens]
+    
+    # TODO: Remove. Debugging
+    for (s1, s2) in zip(list_of_tokens, lemmatized_tokens):
+        if (s1 not in lemmatized_dict and s1 != s2):
+            lemmatized_dict[s1] = s2
+    
+    return lemmatized_tokens
+
 def stem_tokens(list_of_tokens):
     """
     Pre-conditions:
-    - list_of_tokens must be a list of strings
+    - list_of_tokens must be a list of strings to stem
     """
     assert(type(list_of_tokens) == list)
     
@@ -43,7 +63,7 @@ def remove_newlines(s):
     res = re.sub(r"[\r\n|\n|\r]", ' ', s)
     return res
 
-def preprocess_string(s):
+def preprocess_string(s, doStemming=False, doLemmatization=False):
     """
     Proprocessing operations
         - Replace r"-[\r\n|\n]" with ''
@@ -72,18 +92,18 @@ def preprocess_string(s):
     MAX_TOKEN_CHAR_NUM = 20
     tokens = [token for token in tokens if ((len(token) >= MIN_TOKEN_CHAR_NUM)
                                             and (len(token) <= MAX_TOKEN_CHAR_NUM))]
-    stemmed_tokens = stem_tokens(tokens)
-    s = ' '.join(stemmed_tokens)
+    
+    if (doLemmatization):
+        tokens = lemmatize_tokens(tokens)
 
-    """
-    TODO:
-        - Remove common words (not in this func actual
-        - Remove words that only appear once (not in this func actually)
-    """
+    if (doStemming):
+        tokens = stem_tokens(tokens)
+
+    s = ' '.join(tokens)
     
     return s
 
-def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 80,
+def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 90,
                                  min_wordfreq = 3):
     """
     Parses all text documents in corpus_dir and remove words with appearance
@@ -102,6 +122,7 @@ def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 80,
     wordfreq_counter = Counter()
     terms_2_filenames_set = dict()
 
+    # Parsing corpus and computing terms statistics
     print('Collecting corpus terms statistics...')
     for filename in os.listdir(corpus_dir):
         filepath = os.path.join(corpus_dir, filename)
@@ -123,9 +144,9 @@ def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 80,
                in sorted(wordfreq_counter.items())
                if wordfreq < min_wordfreq]))
     print('Removing words that appear in more than {}({}%) documents:'.format(max_allowable_docfreq, max_allowable_percentage))
-    for (term, doc_freq) in ((term, doc_freq) for (term, doc_freq) in sorted(docfreq_counter.items())
+    for (term, doc_freq) in ((term, doc_freq) for (term, doc_freq) in sorted(docfreq_counter.items(), key=lambda x: x[1], reverse=True)
                              if doc_freq > max_allowable_docfreq):
-        print('\t"' + str(term) + '": Found in ' + str(doc_freq) + ' documents')
+        print("\t'{}': Found in {}({}%) documents".format(term, doc_freq, doc_freq/corpus_size * 100))
     
     for filename in os.listdir(corpus_dir):
         filepath = os.path.join(corpus_dir, filename)
@@ -146,7 +167,7 @@ def remove_common_and_rare_words(corpus_dir, max_allowable_percentage = 80,
         file_writer.write(s)
         file_writer.close()
 
-def process_text_for_hLDA():
+def preprocess_text(doStemming=False, doLemmatization=False):
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'i:o:')
     except (getopt.GetoptError):
@@ -170,14 +191,14 @@ def process_text_for_hLDA():
             print('Invalid option: ' + o)
 
     # Process text
-    MIN_FILE_CHAR_NUM = 3000
+    MIN_FILE_CHAR_NUM = 2000
     
     for filename in os.listdir(input_dir):
         print('Processing: ' + filename[:55] + '...')
         filepath = os.path.join(input_dir, filename)
 
         file_reader = open(filepath, encoding='utf-8', errors='ignore')
-        processed_string = preprocess_string(file_reader.read())
+        processed_string = preprocess_string(file_reader.read(), doStemming=doStemming, doLemmatization=doLemmatization)
 
         if (len(processed_string) < MIN_FILE_CHAR_NUM):
             print('\t[Rejected: Too short] ' + filename)
@@ -188,7 +209,7 @@ def process_text_for_hLDA():
         text_file_obj.write(processed_string)
         text_file_obj.close()
 
-    remove_common_and_rare_words(output_dir)
+    remove_common_and_rare_words(output_dir, max_allowable_percentage=80, min_wordfreq=3)
 
 def docs_2_single_file():
     print("Combining all text files in 'processed-text' into corpus.txt...")
@@ -208,6 +229,11 @@ def docs_2_single_file():
     return
 
 if (__name__ == '__main__'):
-    process_text_for_hLDA()
+    preprocess_text(doStemming=False, doLemmatization=True)
     docs_2_single_file()
-    print('Finished running TextManipulator.py! :)')
+    
+    # TODO: Remove Debugging
+    for s1 in sorted(lemmatized_dict):
+        print("\t{} ---(lemmatize)---> {}".format(s1, lemmatized_dict[s1]))
+    
+    print('Finished running PreprocessText.py! :)')
